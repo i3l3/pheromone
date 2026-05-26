@@ -5,22 +5,16 @@
 This folder contains a small Ant Colony Optimization test program for the
 Traveling Salesman Problem.
 
-Run with the default settings:
-
-```powershell
-python .\aco_test\aco_tsp.py
-```
-
 Run the realtime visualization:
 
 ```powershell
-uv run python .\aco_test\aco_tsp_realtime.py
+uv run python aco_tsp.py
 ```
 
 Try different parameters:
 
 ```powershell
-python .\aco_test\aco_tsp.py --cities 40 --ants 80 --iterations 200 --seed 42
+python aco_tsp.py --cities 40 --ants 80 --iterations 200 --seed 42
 ```
 
 Important options:
