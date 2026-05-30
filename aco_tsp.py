@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
-    QWidget, QMenu, QDialog,
+    QWidget, QMenu, QDialog, QComboBox,
 )
 
 
@@ -230,17 +230,7 @@ class TspCanvas(QWidget):
             if self.dragging_city is not None:
                 self.status_changed()
                 self.update()
-        # elif event.button() == Qt.MouseButton.RightButton:
-        #     # 메뉴 열기
-        #     self.dragging_city = self._nearest_city(event.position())
-        #     print(f"mousePressEvent {self.dragging_city}")
-        #     if self.dragging_city is not None and len(self.solver.cities) > 2:
-        #         self.solver.remove_city(self.dragging_city)
-        #         self.dragging_city = None
-        #         self.status_changed()
-        #         self.update()
-        else:
-            return
+        return
 
     def mouseMoveEvent(self, event) -> None:
         if self.dragging_city is None:
@@ -271,25 +261,53 @@ class TspCanvas(QWidget):
                 self.status_changed()
                 self.update()
         elif res == configure_neighbor_action:
-            if self.dragging_city:
-                self.openConfigureDialog()
+            if self.dragging_city is not None:
+                self.dragging_city = None
+                self.status_changed()
+                self.update()
+                self.open_configure_dialog()
 
-    def openConfigureDialog(self):
+    def open_configure_dialog(self) -> None:
         # 연결 가능한 노드, 연결 불가능한 노드, 그리고 각각 설정할때 이동시간 설정 가능하게 (기본값 1)
         dialog = QDialog()
-
-        self.dragging_city = None
-        self.status_changed()
-        self.update()
 
         def dialog_close():
             dialog.close()
 
-        btn_dialog = QPushButton("OK", dialog)
+        dialog_layout = QVBoxLayout(dialog)
+
+        box_layout = QHBoxLayout()
+        nodes_a = QComboBox()
+        arrow_text = QLabel("↔")
+        nodes_b = QComboBox()
+        add_button = QPushButton("+")
+
+        arrow_text.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        add_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        for i in range(len(self.solver.cities)):
+            nodes_a.addItem(str(i))
+            nodes_b.addItem(str(i))
+
+        box_layout.addWidget(nodes_a)
+        box_layout.addWidget(arrow_text)
+        box_layout.addWidget(nodes_b)
+        box_layout.addWidget(add_button)
+
+        btn_layout = QHBoxLayout()
+        btn_dialog = QPushButton("OK")
+        btn_dialog.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         btn_dialog.clicked.connect(dialog_close)
 
+        btn_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        btn_layout.setContentsMargins(0, 10, 0, 0)
+        btn_layout.addWidget(btn_dialog)
+
+        dialog_layout.addLayout(box_layout)
+        dialog_layout.addLayout(btn_layout)
+
         dialog.setWindowTitle("Connection configuration")
-        dialog.resize(300, 200)
+        # dialog.resize(300, 200)
+        dialog.setMinimumWidth(300)
         dialog.show()
 
 
