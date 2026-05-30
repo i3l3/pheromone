@@ -15,7 +15,7 @@ from typing import Sequence
 import qdarktheme
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QCursor
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
-    QWidget,
+    QWidget, QMenu, QDialog,
 )
 
 
@@ -230,13 +230,15 @@ class TspCanvas(QWidget):
             if self.dragging_city is not None:
                 self.status_changed()
                 self.update()
-        elif event.button() == Qt.MouseButton.RightButton:
-            self.dragging_city = self._nearest_city(event.position())
-            if self.dragging_city is not None and len(self.solver.cities) > 2:
-                self.solver.remove_city(self.dragging_city)
-                self.dragging_city = None
-                self.status_changed()
-                self.update()
+        # elif event.button() == Qt.MouseButton.RightButton:
+        #     # 메뉴 열기
+        #     self.dragging_city = self._nearest_city(event.position())
+        #     print(f"mousePressEvent {self.dragging_city}")
+        #     if self.dragging_city is not None and len(self.solver.cities) > 2:
+        #         self.solver.remove_city(self.dragging_city)
+        #         self.dragging_city = None
+        #         self.status_changed()
+        #         self.update()
         else:
             return
 
@@ -253,6 +255,43 @@ class TspCanvas(QWidget):
         self.dragging_city = None
         self.status_changed()
         self.update()
+
+    def contextMenuEvent(self, _event) -> None:
+        menu = QMenu()
+        configure_neighbor_action = menu.addAction('Configure neighbor nodes')
+        delete_node_action = menu.addAction('Delete node')
+
+        self.dragging_city = self._nearest_city(self.mapFromGlobal(QCursor.pos().toPointF()))
+
+        res = menu.exec(QCursor().pos())
+        if res == delete_node_action:
+            if self.dragging_city is not None and len(self.solver.cities) > 2:
+                self.solver.remove_city(self.dragging_city)
+                self.dragging_city = None
+                self.status_changed()
+                self.update()
+        elif res == configure_neighbor_action:
+            if self.dragging_city:
+                self.openConfigureDialog()
+
+    def openConfigureDialog(self):
+        # 연결 가능한 노드, 연결 불가능한 노드, 그리고 각각 설정할때 이동시간 설정 가능하게 (기본값 1)
+        dialog = QDialog()
+
+        self.dragging_city = None
+        self.status_changed()
+        self.update()
+
+        def dialog_close():
+            dialog.close()
+
+        btn_dialog = QPushButton("OK", dialog)
+        btn_dialog.clicked.connect(dialog_close)
+
+        dialog.setWindowTitle("Connection configuration")
+        dialog.resize(300, 200)
+        dialog.show()
+
 
     def _plot_rect(self) -> QRectF:
         return QRectF(
